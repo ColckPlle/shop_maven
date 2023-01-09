@@ -94,10 +94,10 @@ public class ThymeleafExController {
     public String thymeleafExample05(){
         return "thymeleafEx05";
     }
-    @GetMapping("/ex06")
+    @GetMapping(value="/ex06")
     public String thymeleafExample06(String param1, String param2, Model model){
         model.addAttribute("param1", param1);
         model.addAttribute("param2",param2);
-        return "thymeleafEx/thymeleafEx06";
+        return "thymeleafEx06";
     }
 }
