@@ -1,25 +1,45 @@
-package com.shop.service;
+package com.shop.config;
 
-import com.shop.entity.Member;
-import com.shop.repository.MemberRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.shop.service.MemberService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import javax.transaction.Transactional;
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-@Service
-@Transactional
-@RequiredArgsConstructor
-public class MemberService {
-    private final MemberRepository memberRepository;
-    public Member saveMember(Member member){
-        validateDuplicateMember(member);
-        return memberRepository.save(member);
+    @Autowired
+    MemberService memberService;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.formLogin()
+                .loginPage("/members/login")
+                .defaultSuccessUrl("/")
+                .usernameParameter("email")
+                .failureUrl("/members/login/error")
+                .and()
+                .logout()
+                .logoutRequestMatcher(new AntPathRequestMatcher("/members/logout"))
+                .logoutSuccessUrl("/")
+        ;
     }
-    public void validateDuplicateMember(Member member){
-        Member findMember = memberRepository.findByEmail(member.getEmail());
-        if(findMember != null){
-            throw new IllegalStateException("이미 가입된 회원입니다.");
-        }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(memberService).passwordEncoder(passwordEncoder());
     }
 }
